@@ -644,7 +644,7 @@ def run_experiments_and_generate_tables(
         latex_base=latex_base,
     )
 
-    print("\n✅ Processo finalizado.")
+    print("\n Processo finalizado.")
 
 if __name__ == "__main__":
     run_experiments_and_generate_tables(
