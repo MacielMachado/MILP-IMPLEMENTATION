@@ -26,7 +26,7 @@ bb = BranchAndBound(
                 verbose=True),
     heuristics=[
         RoundingHeuristic(only_root=False,   probability=1.0),
-        FixAndPropagate(only_root=False,      probability=1.0),
+        FixAndPropagate(only_root=False,      probability=0.3),
         RENS(only_root=True,                  probability=1.0),
         RINS(only_root=False,                 probability=0.3),
         LocalSearch(only_root=False,          probability=0.3),
