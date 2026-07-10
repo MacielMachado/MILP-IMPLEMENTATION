@@ -14,10 +14,6 @@ JSON_DIR     = Path("results_json")
 TABLES_DIR   = Path("results_tables")
 LATEX_DIR    = Path("results_latex")
 
-# =============================================================================
-# CONFIGURAÇÕES DE B&B (0–9)
-# =============================================================================
-
 def get_all_configs() -> dict:
     """
     Retorna um dicionário {nome_config: função build_solver(model_path)}.
@@ -198,10 +194,6 @@ def get_all_configs() -> dict:
         "cfg8_complete":      cfg8,
     }
 
-# =============================================================================
-# UTILITÁRIOS (inalterados)
-# =============================================================================
-
 def safe_get(dct, *keys, default=None):
     cur = dct
     for k in keys:
@@ -291,10 +283,6 @@ def presolve_rule_is_active(rule_data):
         rule_data.get("coefficients_changed", 0) > 0,
     ])
 
-# =============================================================================
-# RODAR INSTÂNCIAS — agora por configuração
-# =============================================================================
-
 def run_all_instances_for_config(
     config_name: str,
     build_fn,
@@ -314,7 +302,6 @@ def run_all_instances_for_config(
     for mps_file in mps_files:
         out_json = json_dir / f"{mps_file.stem}.json"
 
-        # Pula se já foi rodado (útil para reruns parciais)
         if out_json.exists():
             print(f"    SKIP (já existe): {mps_file.name}")
             continue
@@ -348,10 +335,6 @@ def run_all_configs(
             problems_dir=problems_path,
             json_base_dir=json_base_path,
         )
-
-# =============================================================================
-# EXTRAÇÃO DE MÉTRICAS (inalterada)
-# =============================================================================
 
 def extract_metrics_from_json(json_file: Path) -> dict:
     with open(json_file, "r", encoding="utf-8") as f:
@@ -473,10 +456,6 @@ def collect_presolve_rule_rows(json_dir: Path) -> list:
             print(f"  Erro lendo presolve de {jf.name}: {e}")
     return rows
 
-# =============================================================================
-# ESCRITA DE TABELAS (inalterada)
-# =============================================================================
-
 def write_csv(filepath: Path, fieldnames, rows):
     with open(filepath, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
@@ -510,10 +489,6 @@ def write_latex_table(filepath: Path, caption: str, label: str, fieldnames, rows
         f.write("\\end{tabular}\n")
         f.write("\\end{table}\n")
 
-# =============================================================================
-# GERAR TABELAS POR CONFIGURAÇÃO + TABELA COMPARATIVA
-# =============================================================================
-
 def generate_tables_for_config(
     config_name: str,
     rows: list,
@@ -527,7 +502,6 @@ def generate_tables_for_config(
     tables_path.mkdir(parents=True, exist_ok=True)
     latex_path.mkdir(parents=True, exist_ok=True)
 
-    # Tabela 1 — Relaxação
     t1 = ["instance","status","obj_value","root_lp","root_lp_after_cuts","gap_root","gap_root_after_cuts"]
     write_csv(tables_path / "table_1_resultado_relaxacao.csv", t1,
               [{k: r.get(k) for k in t1} for r in rows])
@@ -536,7 +510,6 @@ def generate_tables_for_config(
                       f"tab:{config_name}_relaxacao", t1,
                       [{k: r.get(k) for k in t1} for r in rows])
 
-    # Tabela 2 — Árvore
     t2 = ["instance","nodes_explored","nodes_pruned","pruned_by_infeasibility",
           "pruned_by_bound","max_depth","max_open_nodes"]
     write_csv(tables_path / "table_2_arvore.csv", t2,
@@ -546,7 +519,6 @@ def generate_tables_for_config(
                       f"tab:{config_name}_arvore", t2,
                       [{k: r.get(k) for k in t2} for r in rows])
 
-    # Tabela 3 — Tempos
     t3 = ["instance","runtime_total","runtime_lp","runtime_heuristics","runtime_cuts"]
     write_csv(tables_path / "table_3_tempos.csv", t3,
               [{k: r.get(k) for k in t3} for r in rows])
@@ -555,7 +527,6 @@ def generate_tables_for_config(
                       f"tab:{config_name}_tempos", t3,
                       [{k: r.get(k) for k in t3} for r in rows])
 
-    # Tabela 4 — Heurísticas e cortes
     t4 = ["instance","n_incumbents","total_heur_calls","total_heur_improvements",
           "total_heur_solutions","total_cuts_added"]
     write_csv(tables_path / "table_4_heuristicas_cortes.csv", t4,
@@ -565,7 +536,6 @@ def generate_tables_for_config(
                       f"tab:{config_name}_heuristicas", t4,
                       [{k: r.get(k) for k in t4} for r in rows])
 
-    # Tabela P1 — Presolve summary
     tp1 = ["instance","presolve_n_rules","presolve_bounds_tightened","presolve_rows_removed",
            "presolve_vars_fixed","presolve_coefficients_changed","presolve_runtime",
            "pct_rows_removed","pct_vars_fixed","pct_presolve_time"]
@@ -576,7 +546,6 @@ def generate_tables_for_config(
                       f"tab:{config_name}_presolve_summary", tp1,
                       [{k: r.get(k) for k in tp1} for r in rows])
 
-    # Tabela P2 — Presolve rules
     tp2 = ["instance","rule","bounds_tightened","rows_removed","vars_fixed",
            "coefficients_changed","runtime","active","infeasible"]
     write_csv(tables_path / "table_p2_presolve_rules.csv", tp2,
@@ -619,10 +588,6 @@ def generate_comparison_table(
     )
     print(f"  Tabela comparativa salva em: {tables_base / 'comparison_all_configs.csv'}")
 
-# =============================================================================
-# PIPELINE PRINCIPAL
-# =============================================================================
-
 def run_experiments_and_generate_tables(
     problems_dir="problems_nl",
     json_base_dir="results_json",
@@ -635,7 +600,6 @@ def run_experiments_and_generate_tables(
     tables_base     = Path(tables_base_dir)
     latex_base      = Path(latex_base_dir)
 
-    # ------------------------------------------------------------------
     print("=" * 70)
     print("ETAPA 1: Rodando instâncias para cada configuração")
     print("=" * 70)
@@ -648,7 +612,6 @@ def run_experiments_and_generate_tables(
             json_base_dir=json_base_path,
         )
 
-    # ------------------------------------------------------------------
     print("\n" + "=" * 70)
     print("ETAPA 2: Lendo JSONs e gerando tabelas por configuração")
     print("=" * 70)
@@ -672,7 +635,6 @@ def run_experiments_and_generate_tables(
         )
         print(f"  Tabelas salvas em: {tables_base / config_name}")
 
-    # ------------------------------------------------------------------
     print("\n" + "=" * 70)
     print("ETAPA 3: Gerando tabela comparativa entre configurações")
     print("=" * 70)
