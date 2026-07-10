@@ -124,7 +124,7 @@ bb.export_stats("results_stress_17.json")
 
 ### 2️⃣ Full Experiment Suite — `execution_examples.py` (All Configs, Reports Generated)
 
-Use this file to **run all 10 B&B configurations** across all `.mps` instances in the problems folder. Results are automatically saved as **CSV and LaTeX tables** organized by configuration.
+Use this file to **run all 9 B&B configurations** across all `.mps` instances in the problems folder. Results are automatically saved as **CSV and LaTeX tables** organized by configuration.
 
 ```bash
 python execution_examples.py
@@ -195,7 +195,7 @@ A single flat table (`comparison_all_configs`) is generated with one row per `(c
 
 ---
 
-## 🔧 The 10 B&B Configurations
+## 🔧 The 9 B&B Configurations
 
 | ID | Name | Strategy | Branch Rule | Presolver | Heuristics | Cuts |
 |---|---|---|---|---|---|---|
@@ -207,8 +207,7 @@ A single flat table (`comparison_all_configs`) is generated with one row per `(c
 | 5 | `cfg5_pseudocost` | BreadthFirst | PseudoCost | ✗ | ✗ | ✗ |
 | 6 | `cfg6_cuts` | BreadthFirst | FirstFractional | ✗ | ✗ | ✓ |
 | 7 | `cfg7_heuristics` | BreadthFirst | FirstFractional | ✗ | ✓ (full) | ✓ |
-| 8 | `cfg8_nonlinear` | BestFirst | FirstFractional | ✗ | ✗ | ✗ |
-| 9 | `cfg9_complete` | DepthFirst | PseudoCost | ✓ | ✓ (selected) | ✓ |
+| 8 | `cfg8_complete` | DepthFirst | PseudoCost | ✓ | ✓ (selected) | ✓ |
 
 ---
 
@@ -271,7 +270,7 @@ A single flat table (`comparison_all_configs`) is generated with one row per `(c
 
 ## 📄 Instance Format
 
-Instances must be in **MPS format** (`.mps`), compatible with the MIPLIB standard. Place them in the `problems/` (for `milp.py`) or `problems_nl/` (for `execution_examples.py`) directory.
+Instances must be in **MPS format** (`.mps`), compatible with the MIPLIB standard. Place them in the `problems/` (for `milp.py`) or `problems/` (for `execution_examples.py`) directory.
 
 ---
 
