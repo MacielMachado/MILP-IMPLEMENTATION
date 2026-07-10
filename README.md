@@ -282,3 +282,107 @@ Instances must be in **MPS format** (`.mps`), compatible with the MIPLIB standar
 | `table_*.csv` | `execution_examples.py` | Metric tables per configuration |
 | `table_*.tex` | `execution_examples.py` | LaTeX-ready tables per configuration |
 | `comparison_all_configs.csv/.tex` | `execution_examples.py` | Cross-config comparison |
+
+## 🔢 SOS2 / Piecewise Linear Example — `sos2_example.py`
+
+This file demonstrates how to model and solve a **nonlinear objective function** using a **piecewise linear (PWL) approximation via SOS2 constraints**, and then solve it with the B&B engine.
+
+### What it does
+
+The script models the problem:
+
+$$
+\min \quad y = x^2
+$$
+
+$$
+\text{s.t.} \quad x \geq 2.3, \quad 0 \leq x \leq 4
+$$
+
+Since the B&B engine only handles **linear** models (MPS format), the nonlinear function \(y = x^2\) is approximated by a **piecewise linear function** defined over breakpoints:
+
+| \(x\) | \(y = x^2\) |
+|:---:|:---:|
+| 0.0 | 0.0 |
+| 1.0 | 1.0 |
+| 2.0 | 4.0 |
+| 3.0 | 9.0 |
+| 4.0 | 16.0 |
+
+The PWL approximation is encoded using **SOS2 (Special Ordered Sets of type 2)** — a classical MIP modeling technique where at most two consecutive \(\lambda\) weights in a convex combination can be nonzero, enforcing that the solution lies on exactly one linear segment of the piecewise function.
+
+### How to run
+
+```bash
+python sos2_example.py
+```
+
+The script runs in **two stages**:
+
+#### Stage 1 — Generate the MPS file
+The `main()` function builds the PWL model in Gurobi and exports it to:
+
+```
+problems_nl/sos2_quad.mps
+```
+
+#### Stage 2 — Solve with the B&B engine
+Immediately after generating the MPS, the B&B solver is called on the exported file. Since the PWL/SOS2 structure is already encoded as binary variables and linear constraints in the MPS, the standard B&B engine handles it natively — **no special nonlinear support is needed**.
+
+The solver is configured minimally (no presolver, no heuristics, no cuts) to keep the example clean and transparent:
+
+```python
+bb = BranchAndBound(
+    model_path="problems_nl/sos2_quad.mps",
+    strategy=BestFirst(),
+    direction=BranchDirection.CEIL_FIRST,
+    branch_rule=FirstFractionalRule(),
+    presolver=None,
+    heuristics=[],
+    cutting_planes=[],
+    verbose=True,   # prints full tree traversal to terminal
+)
+```
+
+Results are printed directly to the terminal — **no report files are generated**.
+
+### Expected output
+
+```
+============================================================
+  Branch & Bound — estratégia: BestFirst
+  Direção: ceil_first | Sentido: MIN
+  Branching: FirstFractionalRule
+  Variáveis: 11 (4 inteiras)
+============================================================
+  Nó    1 (prof= 0) | ...
+  ...
+  Valor total: 5.2900
+```
+
+> The optimal value \(y^* = 5.29\) corresponds to \(x^* = 2.3\), since \(2.3^2 = 5.29\) — the PWL approximation recovers the exact answer at a breakpoint boundary. ✓
+
+### The `add_sos2_pwl_gurobi` function
+
+This utility function can be reused to linearize **any piecewise linear function** in a Gurobi model before exporting to MPS:
+
+```python
+lambdas, segments = add_sos2_pwl_gurobi(
+    model,
+    name="my_pwl",   # prefix for variable/constraint names
+    x=x_var,         # Gurobi variable representing the input
+    y=y_var,         # Gurobi variable representing the output
+    x_breaks=[...],  # list of x breakpoints (strictly increasing)
+    y_breaks=[...],  # list of f(x) values at each breakpoint
+)
+```
+
+Internally it introduces:
+- **\(\lambda_i\)** — continuous convex combination weights (one per breakpoint)
+- **\(s_j\)** — binary segment selectors (one per segment)
+- Convexity constraint: \(\sum_i \lambda_i = 1\)
+- Linkage constraints: \(x = \sum_i x_i \lambda_i\) and \(y = \sum_i y_i \lambda_i\)
+- Adjacency constraints enforcing the SOS2 structure via the binary \(s_j\) variables
+
+This is equivalent to — but more portable than — Gurobi's native `model.addGenConstrPWL()`, since the resulting model can be exported to standard MPS and solved by **any MIP solver**, including this custom B&B engine.
+
