@@ -33,7 +33,7 @@ Install Python dependencies:
 pip install gurobipy numpy
 ```
 
-> **Note:** A valid Gurobi license is required. Academic licenses are available for free at [gurobi.com](https://www.gurobi.com/academia/academic-program-and-licenses/).
+> **Note:** A valid Gurobi license is required.
 
 ---
 
